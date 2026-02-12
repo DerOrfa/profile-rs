@@ -67,6 +67,10 @@ fn copy_file(from:&Path,to:&Path) -> Result<u64, String> {
 }
 fn add_profile(name:&String, basename:&Path, profiles: &mut HashMap<String,Profile>) -> Result<(),String>
 {
+	if name == "org" {
+		return Err(r#"The profile name "org" is reserved, please use another"#.to_string())
+	}
+
 	let (basename,new_name, org_name) = make_canon_names(basename, name)?;
 	copy_file(&basename, &org_name)?;
 	copy_file(&basename, &new_name)?;
