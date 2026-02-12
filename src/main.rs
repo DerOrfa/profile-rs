@@ -9,6 +9,7 @@ use clap_logflag::{LogDestinationConfig, LoggingConfig};
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
+/// A basic cli tool to manage (configuration) files based on profiles.
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
@@ -25,8 +26,11 @@ pub struct Cli {
 pub enum Commands {
 	/// Add a file to a profile (create profile if it doesn't exist)
 	Add { profile:String, file: PathBuf },
+	/// Remove a file from a profile (delete profile if it's empty)
 	Remove { profile:String, file: PathBuf },
+	/// Activate a specific profile (de-activates all others)
 	Activate { profile:String },
+	/// De-activate all profiles resetting all managed files into their original state
 	DeActivate,
 }
 
