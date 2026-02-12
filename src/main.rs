@@ -25,9 +25,17 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
 	/// Add a file to a profile (create profile if it doesn't exist)
-	Add { profile:String, file: PathBuf },
+	Add {
+		profile:String,
+		#[arg(num_args(1..))]
+		file: Vec<PathBuf>
+	},
 	/// Remove a file from a profile (delete profile if it's empty)
-	Remove { profile:String, file: PathBuf },
+	Remove {
+		profile:String,
+		#[arg(num_args(1..))]
+		file: Vec<PathBuf>
+	},
 	/// Activate a specific profile (de-activates all others)
 	Activate { profile:String },
 	/// De-activate all profiles resetting all managed files into their original state
@@ -69,6 +77,11 @@ fn copy_file(from:&Path,to:&Path) -> Result<u64, String> {
 	std::fs::copy(from, to)
 		.map_err(|e|format!(r#"Error copying "{}" to "{}": {e}"#, from.display(), to.display()))
 }
+fn add_profiles(name:&String, basenames:&Vec<PathBuf>, profiles: &mut HashMap<String,Profile>) -> Result<(),String>
+{
+	basenames.iter().map(|b|add_profile(name,b,profiles))
+		.collect::<Result<Vec<_>,_>>().map(|_|())
+}
 fn add_profile(name:&String, basename:&Path, profiles: &mut HashMap<String,Profile>) -> Result<(),String>
 {
 	if name == "org" {
@@ -76,14 +89,24 @@ fn add_profile(name:&String, basename:&Path, profiles: &mut HashMap<String,Profi
 	}
 
 	let (basename,new_name, org_name) = make_canon_names(basename, name)?;
+	let profile = profiles.entry(name.clone()).or_insert(Default::default());
+	if profile.files.contains(&basename) {
+		log::warn!(r#"Ignoring already registered "{}""#,basename.display());
+		return Ok(());
+	}
 	copy_file(&basename, &org_name)?;
 	copy_file(&basename, &new_name)?;
 
-	profiles.entry(name.clone()).or_insert(Default::default()).files.push(basename.clone());
+	profile.files.push(basename.clone());
 	log::info!(r#"Added "{}" to profile "{name}""#,basename.display());
 	Ok(())
 }
 
+fn remove_profiles(name:&String, basenames:&Vec<PathBuf>, profiles: &mut HashMap<String,Profile>) -> Result<(),String>
+{
+	basenames.iter().map(|b|remove_profile(name,b,profiles))
+		.collect::<Result<Vec<_>,_>>().map(|_|())
+}
 fn remove_profile(name:&String, basename:&Path, profiles: &mut HashMap<String,Profile>) -> Result<(),String>
 {
 	let (basename,new_name,org_name) = make_canon_names(basename, name)?;
@@ -146,9 +169,9 @@ fn main() {
 	if let Err(e) = match args.command
 	{
 		Commands::Add { profile,file } =>
-			deactivate(&profiles).and_then(|_|add_profile(&profile,&file,&mut profiles)),
+			deactivate(&profiles).and_then(|_|add_profiles(&profile,&file,&mut profiles)),
 		Commands::Remove { profile,file } =>
-			deactivate(&profiles).and_then(|_|remove_profile(&profile,&file,&mut profiles)),
+			deactivate(&profiles).and_then(|_|remove_profiles(&profile,&file,&mut profiles)),
 		Commands::Activate { profile } =>
 			deactivate(&profiles).and_then(|_|activate(&profile,&profiles)),
 		Commands::DeActivate => deactivate(&profiles)
