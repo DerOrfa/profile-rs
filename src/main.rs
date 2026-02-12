@@ -36,6 +36,8 @@ pub enum Commands {
 		#[arg(num_args(1..))]
 		file: Vec<PathBuf>
 	},
+	/// List files managed by the specified profile
+	List { profile:String },
 	/// Activate a specific profile (de-activates all others)
 	Activate { profile:String },
 	/// De-activate all profiles resetting all managed files into their original state
@@ -149,6 +151,15 @@ fn deactivate(profiles: &HashMap<String,Profile>) -> Result<(),String>
 	Ok(())
 }
 
+fn list(name:&String, profiles: &HashMap<String,Profile>) -> Result<(),String>
+{
+	let profile = profiles.get(name).ok_or(format!(r#"Profile "{name}" doesn't exist"#))?;
+	for file in &profile.files{
+		println!("{}", file.display());
+	}
+	Ok(())
+}
+
 fn main() {
 	let args = Cli::parse();
 	// Initialize logging with the flags from clap
@@ -174,7 +185,8 @@ fn main() {
 			deactivate(&profiles).and_then(|_|remove_profiles(&profile,&file,&mut profiles)),
 		Commands::Activate { profile } =>
 			deactivate(&profiles).and_then(|_|activate(&profile,&profiles)),
-		Commands::DeActivate => deactivate(&profiles)
+		Commands::DeActivate => deactivate(&profiles),
+		Commands::List { profile } => list(&profile, &profiles),
 	}{
 		log::error!("{e}");
 		exit(1);
