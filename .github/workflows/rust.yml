@@ -20,3 +20,5 @@ jobs:
       run: cargo build -r
     - name: create release
       run: gh release create --generate-notes "target/release/profile-rs#Ubuntu 22.04"
+      env: 
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
