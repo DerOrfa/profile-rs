@@ -18,6 +18,6 @@ jobs:
     - name: Build binaries in "release" mode
       run: cargo build -r
     - name: create release
-      run: gh release create --generate-notes "target/release/profile-rs#Ubuntu 22.04"
+      run: gh release create --generate-notes "${{  github.ref_name }}" "target/release/profile-rs#Ubuntu 22.04"
       env: 
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
