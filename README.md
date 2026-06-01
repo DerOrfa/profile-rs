@@ -11,7 +11,14 @@ Before any activation, adding or removal all profiles will be activated to assur
 All file-paths will automatically be made absolute. 
 
 
-### build against older libc
+## build against older libc
+
+### Option 1 (musl)
+
+rustup target add x86_64-unknown-linux-musl
+cargo build --target x86_64-unknown-linux-musl --release
+
+### Option 2 (docker)
 
 ```shell
 docker pull --platform linux/amd64 debian:11
