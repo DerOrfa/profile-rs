@@ -15,8 +15,10 @@ All file-paths will automatically be made absolute.
 
 ### Option 1 (musl)
 
+```shell
 rustup target add x86_64-unknown-linux-musl
 cargo build --target x86_64-unknown-linux-musl --release
+```
 
 ### Option 2 (docker)
 
