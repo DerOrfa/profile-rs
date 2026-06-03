@@ -6,12 +6,19 @@ It works by keeping a list of managed files. Adding a file to a profile means cr
 When activating a profile, all files managed by it will be replaced by the profile-specific one.
 When deactivating all managed files of all profiles will be replaced by their previously created original versions.
 
-Before any activation, adding or removal all profiles will be activated to assure a defined state.
+Before any activation, adding or removal all profiles will be deactivated to assure a defined state.
 
 All file-paths will automatically be made absolute. 
 
+## build for older windows
 
-## build against older libc
+```shell
+rustup component add rust-src --toolchain nightly
+sudo apt install apt install binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64-win32
+cargo +nightly build -r -Z build-std --target x86_64-win7-windows-gnu
+```
+
+## build against older linux
 
 ### Option 1 (musl)
 
