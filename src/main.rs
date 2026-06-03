@@ -3,9 +3,9 @@ use std::fs::File;
 use std::io::{read_to_string, Write};
 use std::path::{Path, PathBuf};
 use std::process::exit;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use clap::builder::PossibleValue;
 use clap::ValueHint::{FilePath};
-use clap_logflag::{LogDestinationConfig, LoggingConfig};
 use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 
@@ -18,8 +18,8 @@ pub struct Cli {
 	/// profiles file
 	#[arg(long, value_hint = FilePath, default_value = "profiles.toml")]
 	pub config: PathBuf,
-	#[clap(flatten)]
-	log: clap_logflag::LogArgs,
+	#[arg(long, default_value = LevelFilter::Info.as_str())]
+	pub log_level:LogLevel
 }
 
 #[derive(Subcommand)]
@@ -43,6 +43,30 @@ pub enum Commands {
 	/// De-activate all profiles resetting all managed files into their original state
 	DeActivate,
 }
+
+#[derive(Clone)]
+pub struct LogLevel(LevelFilter);
+
+impl ValueEnum for LogLevel
+{
+	fn value_variants<'a>() -> &'a [Self]
+	{
+		&[
+			LogLevel(LevelFilter::Trace),
+			LogLevel(LevelFilter::Debug),
+			LogLevel(LevelFilter::Info),
+			LogLevel(LevelFilter::Warn),
+			LogLevel(LevelFilter::Error)
+		]
+	}
+
+	fn to_possible_value(&self) -> Option<PossibleValue> {
+		let alias= self.0.to_string().to_lowercase();
+		Some(PossibleValue::new(self.0.as_str()).alias(alias))
+	}
+}
+
+
 
 #[derive(Deserialize,Serialize,Debug,Default)]
 struct Profile{files:Vec<PathBuf>}
@@ -160,16 +184,11 @@ fn list(name:&String, profiles: &HashMap<String,Profile>) -> Result<(),String>
 	Ok(())
 }
 
+
 fn main() {
 	let args = Cli::parse();
 	// Initialize logging with the flags from clap
-	clap_logflag::init_logging!(
-        args.log.or_default(LoggingConfig::new(vec![LogDestinationConfig {
-                destination: clap_logflag::LogDestination::Stderr,
-                level: None,
-            }],)),
-        LevelFilter::Info
-    );
+	log::set_max_level(args.log_level.0);
 
 	let mut profiles = match get_profiles(&args.config)
 	{
